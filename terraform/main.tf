@@ -20,6 +20,6 @@ resource "docker_container" "nginx" {
   name  = "gitops-lab-nginx"
   ports {
     internal = 80
-    external = 8080
+    external = var.external_port
   }
 }
