@@ -15,8 +15,26 @@ on:
 jobs:
   terraform:
     runs-on: self-hosted
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform Plan
+        run: terraform plan
+        working-directory: terraform
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve
+        working-directory: terraform
+
+      - name: Terraform Destroy
+        run: terraform destroy
+        working-directory: terraform
