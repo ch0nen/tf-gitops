@@ -40,12 +40,12 @@ jobs:
         working-directory: terraform
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -var="nginx_version=${{ secrets.NGINX_VERSION }}"
         working-directory: terraform
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var="nginx_version=${{ secrets.NGINX_VERSION }}"
         working-directory: terraform
 
       # - name: Terraform Destroy

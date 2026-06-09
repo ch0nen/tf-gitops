@@ -9,3 +9,9 @@ variable "external_port" {
   type = number
   default = 9090
 }
+
+variable "nginx_version" {
+  description = "Version of nginx"
+  type = string
+  default = "latest"
+}
