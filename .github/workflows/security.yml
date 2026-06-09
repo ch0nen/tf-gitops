@@ -19,7 +19,7 @@ jobs:
           scan-type: "fs"
           scan-ref: "."
           format: "sarif"
-          output: "trivy-results/"
+          output: "trivy-results/trivy-results.sarif"
           severity: "CRITICAL,HIGH"
           exit-code: "1"
 
