@@ -1,0 +1,31 @@
+name: Security scan
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  trivy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results/"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+
+      - name: Upload Trivy results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-results
+          path: trivy-results/
