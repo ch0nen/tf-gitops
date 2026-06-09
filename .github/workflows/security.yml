@@ -13,6 +13,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Create Trivy results directory
+        run: mkdir -p trivy-results
+
       - name: Run Trivy
         uses: aquasecurity/trivy-action@master
         with:
