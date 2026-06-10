@@ -39,21 +39,32 @@ jobs:
             awk -F'"' '{print $2}' | \
             sed "s/\${var.nginx_version}/${{ secrets.NGINX_VERSION }}/g")
 
+          echo "Images found: $images"
+          overall_exit=0
+          counter=1
+
           for image in $images; do
             echo "Scanning image: $image"
-            safe_name=$(echo $image | tr '/:' '--')
             trivy image \
-              --severity CRITICAL,HIGH \
-              --exit-code 1 \
+              --severity HIGH,CRITICAL \
+              --exit-code 0 \
               --format sarif \
               --output trivy-results/trivy-image-${counter}.sarif \
+              $image
+
+            trivy image \
+              --severity HIGH,CRITICAL \
+              --exit-code 1 \
+              --format table \
               $image || overall_exit=1
+
             counter=$((counter + 1))
           done
+
           exit $overall_exit
 
       - name: Upload filesystem scan results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-results/trivy-results.sarif
