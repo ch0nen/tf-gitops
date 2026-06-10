@@ -46,15 +46,25 @@ jobs:
               --severity CRITICAL,HIGH \
               --exit-code 1 \
               --format sarif \
-              --output trivy-results/trivy-image-${safe_name}.sarif \
-              $image
+              --output trivy-results/trivy-image-${counter}.sarif \
+              $image || overall_exit=1
+            counter=$((counter + 1))
           done
+          exit $overall_exit
 
-      - name: Upload ALL Trivy results
+      - name: Upload filesystem scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results/trivy-results.sarif
+          category: "trivy-fs"
+
+      - name: Upload Image Trivy results
         if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: trivy-results/
+          sarif_file: trivy-results/trivy-image-*.sarif
+          category: "trivy-image"
 
       - name: Create issue on findings
         if: failure()
