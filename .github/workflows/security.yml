@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   security-events: write
+  issues: write
 
 jobs:
   trivy:
@@ -20,7 +21,7 @@ jobs:
       - name: Create Trivy results directory
         run: mkdir -p trivy-results
 
-      - name: Run Trivy
+      - name: Scan filesystem
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "fs"
@@ -30,8 +31,50 @@ jobs:
           severity: "CRITICAL,HIGH"
           exit-code: "1"
 
-      - name: Upload Trivy results
+      - name: Extract and scan images from Terraform
+        run: |
+          images=$(grep 'name\s*=' terraform/main.tf | \
+            grep -v 'container_name\|variable\|output\|resource\|provider\|gitops' | \
+            grep ':\|latest' | \
+            awk -F'"' '{print $2}')
+
+          for image in $images; do
+            echo "Scanning image: $image"
+            safe_name=$(echo $image | tr '/:' '--')
+            trivy image \
+              --severity CRITICAL,HIGH \
+              --exit-code 1 \
+              --format sarif \
+              --output trivy-results/trivy-image-${safe_name}.sarif \
+              $image
+          done
+
+      - name: Upload ALL Trivy results
         if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: trivy-results/trivy-results.sarif
+          sarif_file: trivy-results/
+
+      - name: Create issue on findings
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = `🚨 Trivy security findings - ${new Date().toISOString().split('T')[0]}`
+            const body = `## Security scan failed
+
+            Trivy found HIGH or CRITICAL vulnerabilities in branch \`${{ github.ref_name }}\`.
+
+            **Commit:** ${{ github.sha }}
+            **Workflow:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Check the Security tab for details.`
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'trivy']
+            })
