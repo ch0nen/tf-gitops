@@ -36,7 +36,8 @@ jobs:
           images=$(grep 'name\s*=' terraform/main.tf | \
             grep -v 'container_name\|variable\|output\|resource\|provider\|gitops' | \
             grep ':\|latest' | \
-            awk -F'"' '{print $2}')
+            awk -F'"' '{print $2}' | \
+            sed "s/\${var.nginx_version}/${{ secrets.NGINX_VERSION }}/g")
 
           for image in $images; do
             echo "Scanning image: $image"
