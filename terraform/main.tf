@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     docker = {
-      source = "kreuzwerker/docker"
+      source  = "kreuzwerker/docker"
       version = "~> 4.0"
     }
   }
@@ -15,11 +15,24 @@ resource "docker_image" "nginx" {
   name = "nginx:${var.nginx_version}"
 }
 
+resource "vuln_image" "vulnerables/web-owasp" {
+  name = "vulnerables/web-owasp:latest"
+}
+
 resource "docker_container" "nginx" {
   image = docker_image.nginx.name
   name  = "gitops-lab-nginx"
   ports {
     internal = 80
     external = var.external_port
+  }
+}
+
+resource "docker_container" "vulnerables/web-owasp" {
+  image = vuln_image.vulnerables.web-owasp.name
+  name  = "gitops-lab-vulnerables-web-owasp"
+  ports {
+    internal = 80
+    external = var.external_port_2
   }
 }
